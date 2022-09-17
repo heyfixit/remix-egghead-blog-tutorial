@@ -1,4 +1,4 @@
-import { Form, useActionData } from "@remix-run/react";
+import { Form, useActionData, useTransition } from "@remix-run/react";
 import { ActionFunction, json, redirect } from "@remix-run/server-runtime";
 import invariant from "tiny-invariant";
 import { createPost } from "~/models/post.server";
@@ -41,6 +41,8 @@ const inputClassName = `w-full rounded border border-gray-300 px-3 py-2 mb-3 foc
 
 export default function NewPostRoute() {
   const errors = useActionData() as ActionData;
+  const transition = useTransition();
+  const isCreating = Boolean(transition.submission);
   return (
     <Form method="post">
       <p>
@@ -73,9 +75,10 @@ export default function NewPostRoute() {
       <p className="text-right">
         <button
           type="submit"
-          className="rounded bg-blue-600 px-4 py-2 text-white"
+          className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400 disabled:bg-blue-300"
+          disabled={isCreating}
         >
-          Create Post
+          {isCreating ? "Creating..." : "Create Post"}
         </button>
       </p>
     </Form>
