@@ -1,5 +1,5 @@
-import { Form } from "@remix-run/react";
-import { ActionFunction, redirect } from "@remix-run/server-runtime";
+import { Form, useActionData } from "@remix-run/react";
+import { ActionFunction, json, redirect } from "@remix-run/server-runtime";
 import { createPost } from "~/models/post.server";
 
 export const action: ActionFunction = async ({ request }) => {
@@ -8,6 +8,18 @@ export const action: ActionFunction = async ({ request }) => {
   const slug = data.get("slug");
   const markdown = data.get("markdown");
 
+  const errors = {
+    title: !title ? "Title is required" : null,
+    slug: !slug ? "Slug is required" : null,
+    markdown: !markdown ? "Markdown is required" : null,
+  };
+
+  // if any of the values were truthy we know there was at least one error
+  const hasErrors = Object.values(errors).some((error) => error);
+  if (hasErrors) {
+    return json(errors);
+  }
+
   await createPost({ title, slug, markdown });
   return redirect("/posts/admin");
 };
@@ -15,22 +27,30 @@ export const action: ActionFunction = async ({ request }) => {
 const inputClassName = `w-full rounded border border-gray-300 px-3 py-2 mb-3 focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-transparent`;
 
 export default function NewPostRoute() {
+  const errors = useActionData();
   return (
     <Form method="post">
       <p>
         <label>
-          Post Title:
+          Post Title:{" "}
+          {errors?.title && <em className="text-red-600">{errors.title}</em>}
           <input type="text" name="title" className={inputClassName} />
         </label>
       </p>
       <p>
         <label>
-          Post Slug:
+          Post Slug:{" "}
+          {errors?.slug && <em className="text-red-600">{errors.slug}</em>}
           <input type="text" name="slug" className={inputClassName} />
         </label>
       </p>
       <p>
-        <label htmlFor="markdown">Markdown:</label>
+        <label htmlFor="markdown">
+          Markdown:{" "}
+          {errors?.markdown && (
+            <em className="text-red-600">{errors.markdown}</em>
+          )}
+        </label>
         <textarea
           name="markdown"
           id="markdown"
