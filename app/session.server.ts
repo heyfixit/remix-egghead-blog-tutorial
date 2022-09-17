@@ -95,3 +95,13 @@ export async function logout(request: Request) {
     },
   });
 }
+
+export async function requireAdminUser(request: Request) {
+  const user = await requireUser(request);
+  if (user.email !== process.env.ADMIN_EMAIL) {
+    // when you throw a response, remix stops all execution of the route
+    throw await logout(request);
+  }
+
+  return user;
+}
