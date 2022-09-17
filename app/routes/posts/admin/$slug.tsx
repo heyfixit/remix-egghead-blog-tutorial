@@ -11,7 +11,12 @@ import {
   redirect,
 } from "@remix-run/server-runtime";
 import invariant from "tiny-invariant";
-import { createPost, getPost, updatePost } from "~/models/post.server";
+import {
+  createPost,
+  deletePost,
+  getPost,
+  updatePost,
+} from "~/models/post.server";
 import { requireAdminUser } from "~/session.server";
 
 type ActionData =
@@ -35,6 +40,13 @@ export const loader: LoaderFunction = async ({ request, params }) => {
 export const action: ActionFunction = async ({ request, params }) => {
   await requireAdminUser(request);
   const data = await request.formData();
+  const intent = data.get("intent");
+
+  if (intent === "delete") {
+    await deletePost(params.slug);
+    return redirect("/posts/admin");
+  }
+
   const title = data.get("title");
   const slug = data.get("slug");
   const markdown = data.get("markdown");
@@ -72,6 +84,7 @@ export default function NewPostRoute() {
   const isNewPost = !data.post;
   const isCreating = transition.submission?.formData.get("intent") === "create";
   const isUpdating = transition.submission?.formData.get("intent") === "update";
+  const isDeleting = transition.submission?.formData.get("intent") === "delete";
   return (
     <Form method="post" key={data.post?.slug ?? "new"}>
       <p>
@@ -112,7 +125,18 @@ export default function NewPostRoute() {
           defaultValue={data.post?.markdown}
         />
       </p>
-      <p className="text-right">
+      <div className="flex justify-end gap-4">
+        {isNewPost ? null : (
+          <button
+            type="submit"
+            name="intent"
+            value="delete"
+            className="rounded bg-red-500 px-4 py-2 text-white hover:bg-red-600 focus:bg-red-400 disabled:bg-red-300"
+            disabled={isDeleting}
+          >
+            {isDeleting ? null : isUpdating ? "Deleting..." : "Delete Post"}
+          </button>
+        )}
         <button
           type="submit"
           name="intent"
@@ -120,10 +144,10 @@ export default function NewPostRoute() {
           className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400 disabled:bg-blue-300"
           disabled={isCreating || isUpdating}
         >
-          {isNewPost ? (isCreating ? "Creating..." : "Create Post") : null}
-          {isNewPost ? null : isUpdating ? "Updating..." : "Update Post"}
+          {isNewPost ? (isCreating ? "Creating..." : "Create") : null}
+          {isNewPost ? null : isUpdating ? "Updating..." : "Update"}
         </button>
-      </p>
+      </div>
     </Form>
   );
 }

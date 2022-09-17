@@ -41,3 +41,11 @@ export async function updatePost(
     data: post,
   });
 }
+
+export async function deletePost(slug: string) {
+  return prisma.post.delete({
+    where: {
+      slug,
+    },
+  });
+}
