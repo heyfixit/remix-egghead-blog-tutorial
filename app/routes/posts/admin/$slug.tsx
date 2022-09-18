@@ -175,3 +175,4 @@ export function CatchBoundary() {
   }
   throw new Error(`Unsupported thrown response status code ${caught.status}`);
 }
+
