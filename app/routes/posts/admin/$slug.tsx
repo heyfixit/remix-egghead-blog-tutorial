@@ -1,3 +1,4 @@
+import { Post } from "@prisma/client";
 import {
   Form,
   useActionData,
@@ -27,20 +28,26 @@ type ActionData =
     }
   | undefined;
 
+type LoaderData = {
+  post?: Post;
+};
+
 export const loader: LoaderFunction = async ({ request, params }) => {
   await requireAdminUser(request);
+  invariant(params.slug, "slug is required");
   if (params.slug === "new") {
-    return json({});
+    return json<LoaderData>({});
   }
 
   const post = await getPost(params.slug);
-  return json({ post });
+  return json<LoaderData>({ post });
 };
 
 export const action: ActionFunction = async ({ request, params }) => {
   await requireAdminUser(request);
   const data = await request.formData();
   const intent = data.get("intent");
+  invariant(params.slug, "slug is required");
 
   if (intent === "delete") {
     await deletePost(params.slug);
@@ -78,7 +85,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 const inputClassName = `w-full rounded border border-gray-300 px-3 py-2 mb-3 focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-transparent`;
 
 export default function NewPostRoute() {
-  const data = useLoaderData();
+  const data = useLoaderData() as LoaderData;
   const errors = useActionData() as ActionData;
   const transition = useTransition();
   const isNewPost = !data.post;
